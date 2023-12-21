@@ -9,6 +9,7 @@ public class Benchmark
 {
     private AppDbContext _dbContext1 = default!;
     private AppDbContext _dbContext2 = default!;
+    private AppDbContext _dbContext3 = default!;
     private string _currentCultureCode = default!;
 
     [GlobalSetup]
@@ -21,6 +22,7 @@ public class Benchmark
         // Let's just keep separate contexts to be fair.
         _dbContext1 = new AppDbContext();
         _dbContext2 = new AppDbContext();
+        _dbContext3 = new AppDbContext();
 
         _currentCultureCode = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 
@@ -54,6 +56,20 @@ public class Benchmark
             {
                 Id = x.Id,
                 Name = x.Translations.First(t => t.Code == _currentCultureCode).Value
+            })
+            .ToListAsync();
+    }
+
+    [Benchmark]
+    public async Task WithJsonColumn2()
+    {
+        _ = await _dbContext3.ProductsJson2
+            .AsNoTracking()
+            .Take(Take)
+            .Select(x => new
+            {
+                Id = x.Id,
+                Name = x.Name.Translations.First(t => t.LanguageCode == _currentCultureCode).Value
             })
             .ToListAsync();
     }
