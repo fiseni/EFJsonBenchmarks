@@ -1,4 +1,5 @@
 ﻿using Ardalis.GuardClauses;
+using System;
 
 namespace EFJsonBenchmarks;
 
@@ -19,4 +20,11 @@ public class TranslationJson2
     }
 
     public required string? Value { get; set; }
+
+    //public override string? ToString()
+    //{
+    //    return Value;
+    //}
+
+    public static implicit operator string?(TranslationJson2? translation) => translation?.Value ?? default;
 }
