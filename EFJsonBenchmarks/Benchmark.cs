@@ -1,6 +1,10 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using AutoMapper;
+using AutoMapper.Internal;
+using AutoMapper.QueryableExtensions;
+using BenchmarkDotNet.Attributes;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Reflection;
 
 namespace EFJsonBenchmarks;
 
@@ -11,6 +15,7 @@ public class Benchmark
     private AppDbContext _dbContext2 = default!;
     private AppDbContext _dbContext3 = default!;
     private string _currentCultureCode = default!;
+    private MapperConfiguration _mapperConfiguration = default!;
 
     [GlobalSetup]
     public async Task Setup()
@@ -26,7 +31,24 @@ public class Benchmark
 
         _currentCultureCode = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 
+        _mapperConfiguration = new MapperConfiguration(GetConfigAction(typeof(Program).Assembly));
         Console.WriteLine("### Setup completed!");
+    }
+
+    private static Action<IMapperConfigurationExpression> GetConfigAction(params Assembly[] assemblies)
+    {
+        return cfg =>
+        {
+            cfg.Internal().ForAllMaps((tm, me) => me.IgnoreAllPropertiesWithAnInaccessibleSetter());
+            cfg.ShouldMapField = x => x.IsPublic;
+            cfg.ShouldUseConstructor = x => x.IsPublic;
+            cfg.ShouldMapMethod = x => false;
+
+            if (assemblies.Any())
+            {
+                cfg.AddMaps(assemblies);
+            }
+        };
     }
 
     [Params(10, 100, 1000)]
@@ -66,11 +88,21 @@ public class Benchmark
         _ = await _dbContext3.ProductsJson2
             .AsNoTracking()
             .Take(Take)
-            .Select(x => new
+            .Select(x => new ProductListDto
             {
                 Id = x.Id,
-                Name = x.Name.Translations.First(t => t.LanguageCode == _currentCultureCode).Value
+                Name = x.Name.Translations.FirstOrDefault(t => t.LanguageCode == _currentCultureCode)
             })
+            .ToListAsync();
+    }
+
+    [Benchmark]
+    public async Task WithJsonColumn22()
+    {
+        _ = await _dbContext3.ProductsJson2
+            .AsNoTracking()
+            .Take(Take)
+            .ProjectTo<ProductListDto>(_mapperConfiguration)
             .ToListAsync();
     }
 }

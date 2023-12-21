@@ -5,7 +5,6 @@ namespace EFJsonBenchmarks;
 
 public class LocalizedText
 {
-
     public string? Value
     {
         get

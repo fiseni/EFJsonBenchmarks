@@ -12,7 +12,7 @@ public class AppDbContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=EFJsonBenchmarks;Integrated Security=SSPI;Trusted_Connection=True";
-        optionsBuilder.UseSqlServer(connectionString).EnableSensitiveDataLogging().LogTo(Console.WriteLine, LogLevel.Information);
+        optionsBuilder.UseSqlServer(connectionString); //.EnableSensitiveDataLogging().LogTo(Console.WriteLine, LogLevel.Information);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
